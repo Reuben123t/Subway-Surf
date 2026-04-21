@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subway Surfers Ultimate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --gold:#FFD700;--gold-d:#FFA500;
+            --bg:rgba(8,8,18,0.93);--border:2px solid #FFD700;
+            --green:#4CAF50;--red:#E74C3C;--blue:#3498DB;
+        }
+        body{margin:0;overflow:hidden;font-family:'Nunito',sans-serif;background:#1a1a2e;color:#fff;user-select:none}
+        canvas{display:block;position:absolute;top:0;left:0;z-index:0}
+
+        /* panels */
+        .panel{
+            position:absolute;top:50%;left:50%;
+            transform:translate(-50%,-50%);
+            background:var(--bg);border-radius:20px;text-align:center;
+            z-index:200;backdrop-filter:blur(16px);border:var(--border);padding:34px 40px;
+        }
+        .panel h1,.panel h2{
+            font-family:'Boogaloo',cursive;color:var(--gold);font-size:2rem;
+            margin-bottom:18px;letter-spacing:1px;
+        }
+        .subtitle{color:#888;font-size:13px;margin-bottom:18px}
+
+        /* login */
+        #login{min-width:340px}
+
+        /* menu */
+        #menu{min-width:440px;max-width:520px;max-height:90vh;overflow-y:auto}
+        .menu-section{margin:14px 0}
+        .menu-section h3{color:var(--gold);font-family:'Boogaloo',cursive;font-size:1.1rem;margin-bottom:10px}
+
+        .char-grid{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+        .char-card{
+            width:70px;height:70px;background:rgba(255,255,255,0.07);border-radius:12px;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            cursor:pointer;transition:transform .2s,background .2s;font-size:10px;gap:3px;
+            border:2px solid transparent;
+        }
+        .char-card .icon{font-size:26px}
+        .char-card:hover{background:rgba(255,255,255,0.14);transform:scale(1.05)}
+        .char-card.selected{border-color:var(--gold);background:rgba(255,215,0,0.12);transform:scale(1.08)}
+        .char-card.locked{opacity:.4;cursor:not-allowed}
+
+        /* hud */
+        #gameUI{
+            position:absolute;top:16px;left:16px;z-index:100;
+            background:var(--bg);padding:13px 18px;border-radius:14px;
+            backdrop-filter:blur(10px);min-width:200px;display:none;
+            border:1px solid rgba(255,215,0,.3);
+        }
+        .stat{font-size:13px;margin:3px 0;display:flex;justify-content:space-between;gap:12px}
+        .sv{color:var(--gold);font-weight:900;font-size:14px}
+        .pill{
+            padding:4px 10px;border-radius:20px;margin-top:7px;
+            font-size:11px;font-weight:700;display:none;
+        }
+        .pill-boost{background:linear-gradient(90deg,#FF6B6B,#4ECDC4)}
+        .pill-board{background:linear-gradient(90deg,#8A2BE2,#4B0082)}
+        .bar{width:100%;height:5px;background:rgba(255,255,255,.15);border-radius:3px;margin-top:4px;overflow:hidden}
+        .bar-fill{height:100%;background:linear-gradient(90deg,#FF6B6B,var(--gold));width:0%;transition:width .3s}
+
+        /* shop */
+        #shop{width:90%;max-width:840px;max-height:90vh;overflow-y:auto;display:none}
+        .tabs{display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+        .tab{padding:8px 20px;background:rgba(255,255,255,.08);border-radius:30px;cursor:pointer;transition:all .25s;font-weight:700;font-size:13px}
+        .tab.active{background:var(--gold);color:#111}
+        .tab:hover:not(.active){background:rgba(255,255,255,.15)}
+        .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:14px}
+        .item{background:rgba(255,255,255,.07);padding:14px 10px;border-radius:14px;cursor:pointer;transition:transform .2s,background .2s;border:2px solid transparent;text-align:center}
+        .item:hover{transform:scale(1.04);background:rgba(255,255,255,.13)}
+        .item.equipped{border-color:var(--gold);background:rgba(255,215,0,.1)}
+        .item .iicon{font-size:2rem;margin-bottom:7px}
+        .item .iname{font-weight:700;font-size:13px}
+        .item .idesc{font-size:11px;color:#aaa;margin:3px 0}
+        .item .iprice{color:var(--gold);font-weight:900;margin-top:7px;font-size:14px}
+        .item .iowned{color:#4CAF50;font-size:11px;font-weight:700}
+
+        /* game over */
+        #gameOver{min-width:380px;display:none}
+        .go-row{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:8px;padding:8px 14px;margin:5px 0;font-size:13px}
+        .go-row span{color:var(--gold);font-weight:900}
+        #hsList .hs{padding:5px 10px;background:rgba(255,255,255,.07);border-radius:6px;margin:3px 0;font-size:12px;display:flex;justify-content:space-between}
+        #hsList .hs.gold{background:rgba(255,215,0,.15);color:var(--gold)}
+
+        /* admin */
+        .admin-box{background:rgba(220,20,60,.1);border:1px solid rgba(220,20,60,.5);padding:12px;border-radius:10px;margin-top:12px}
+        .admin-box h3{color:#FF6B6B;font-size:.95rem;margin-bottom:8px}
+        .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+        .abtn{background:linear-gradient(135deg,#c0392b,#922b21)!important;font-size:11px!important;padding:7px!important}
+
+        /* buttons */
+        button{
+            font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#4CAF50,#2e7d32);
+            border:none;color:#fff;padding:11px 24px;font-size:14px;font-weight:700;
+            border-radius:30px;cursor:pointer;margin:4px;
+            transition:transform .18s,box-shadow .18s;box-shadow:0 4px 14px rgba(0,0,0,.3);
+        }
+        button:hover{transform:scale(1.06);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+        button:active{transform:scale(.97)}
+        .bb{background:linear-gradient(135deg,#3498DB,#1a5276)}
+        .bg{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#111}
+
+        /* inputs */
+        input{
+            font-family:'Nunito',sans-serif;padding:11px 14px;margin:7px 0;
+            border:1.5px solid rgba(255,215,0,.3);border-radius:10px;width:100%;
+            font-size:14px;background:rgba(255,255,255,.07);color:#fff;outline:none;
+            transition:border-color .2s;
+        }
+        input:focus{border-color:var(--gold)}
+        input::placeholder{color:#555}
+
+        /* user bar */
+        #userBar{
+            position:absolute;top:16px;right:16px;background:var(--bg);padding:8px 14px;
+            border-radius:30px;backdrop-filter:blur(10px);z-index:100;display:none;
+            font-size:13px;font-weight:700;border:1px solid rgba(255,215,0,.3);
+            align-items:center;gap:10px;
+        }
+        .lbtn{padding:4px 11px!important;font-size:11px!important;margin:0!important}
+
+        /* pause */
+        #pauseBox{
+            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            background:var(--bg);border:var(--border);border-radius:20px;
+            padding:28px 40px;text-align:center;z-index:200;display:none;
+        }
+        #pauseBox h2{font-family:'Boogaloo',cursive;color:var(--gold);font-size:2rem;margin-bottom:14px}
+
+        /* lane dots */
+        #dots{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:100}
+        .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25);transition:background .2s}
+        .dot.on{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+
+        /* controls */
+        #hint{
+            position:absolute;bottom:14px;right:14px;background:var(--bg);border-radius:10px;
+            padding:9px 13px;font-size:11px;color:#bbb;line-height:1.7;z-index:100;display:none;
+        }
+
+        /* loading */
+        #loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:300;display:none}
+        #loading h2{font-family:'Boogaloo',cursive;color:var(--gold);margin-top:14px;font-size:1.3rem}
+        .spin{border:5px solid rgba(255,255,255,.15);border-top:5px solid var(--gold);border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .err{color:#FF6B6B;margin-top:8px;font-size:12px;display:none;font-weight:700}
+
+        /* scrollbar */
+        .panel::-webkit-scrollbar{width:5px}
+        .panel::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px}
+
+        /* ── ADMIN PANEL ── */
+        #adminPage{
+            position:absolute;inset:0;background:rgba(5,5,15,.97);z-index:500;
+            display:none;flex-direction:column;overflow:hidden;
+        }
+        #adminPage .ap-header{
+            background:linear-gradient(135deg,#1a0000,#2a0808);
+            border-bottom:2px solid #CC0000;padding:14px 24px;
+            display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+        }
+        #adminPage .ap-header h2{font-family:'Boogaloo',cursive;color:#FF4444;font-size:1.6rem;letter-spacing:1px}
+        #adminPage .ap-header .ap-meta{font-size:12px;color:#888}
+        .ap-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,50,50,.2);flex-shrink:0}
+        .ap-tab{padding:12px 20px;cursor:pointer;font-weight:700;font-size:13px;color:#888;border-bottom:3px solid transparent;transition:all .2s}
+        .ap-tab.active{color:#FF4444;border-bottom-color:#FF4444}
+        .ap-tab:hover:not(.active){color:#ccc}
+        .ap-body{flex:1;overflow-y:auto;padding:20px 24px}
+
+        /* user table */
+        .u-table{width:100%;border-collapse:collapse;font-size:13px}
+        .u-table th{text-align:left;padding:10px 12px;color:#FF4444;font-family:'Boogaloo',cursive;font-size:14px;border-bottom:1px solid rgba(255,50,50,.3)}
+        .u-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+        .u-table tr:hover td{background:rgba(255,50,50,.05)}
+        .u-table .uname-cell{font-weight:700;color:#eee}
+        .u-table .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+        .badge-admin{background:rgba(255,68,68,.2);color:#FF4444;border:1px solid #FF4444}
+        .badge-user{background:rgba(80,80,255,.15);color:#88aaff;border:1px solid #5566cc}
+        .row-btns{display:flex;gap:6px;flex-wrap:wrap}
+        .row-btns button{padding:4px 10px!important;font-size:11px!important;margin:0!important;border-radius:6px!important}
+        .rbtn-coins{background:linear-gradient(135deg,#DAA520,#B8860B)!important}
+        .rbtn-unlock{background:linear-gradient(135deg,#2980B9,#1a5276)!important}
+        .rbtn-reset{background:linear-gradient(135deg,#c0392b,#922b21)!important}
+        .rbtn-del{background:linear-gradient(135deg,#555,#333)!important}
+
+        /* stats cards */
+        .stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+        .stat-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,50,50,.2);border-radius:12px;padding:16px;text-align:center}
+        .stat-card .sc-val{font-family:'Boogaloo',cursive;font-size:1.8rem;color:#FF4444}
+        .stat-card .sc-lbl{font-size:11px;color:#888;margin-top:4px}
+
+        /* coin editor */
+        .coin-editor{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+        .coin-editor input{width:120px!important;padding:8px 12px!important;margin:0!important;font-size:13px!important}
+        .coin-editor select{
+            padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.07);
+            color:#fff;border:1.5px solid rgba(255,215,0,.3);font-size:13px;outline:none;
+        }
+
+        /* ── MOBILE TOUCH ── */
+        #touchZone{
+            position:absolute;inset:0;z-index:50;display:none;
+            touch-action:none;
+        }
+        #touchBtns{
+            position:absolute;bottom:16px;left:0;right:0;
+            display:none;justify-content:space-between;align-items:flex-end;
+            padding:0 16px;z-index:100;pointer-events:none;
+        }
+        .t-side{display:flex;gap:10px;pointer-events:all}
+        .t-side-right{flex-direction:column;gap:8px;align-items:flex-end}
+        .tbtn{
+            width:64px;height:64px;border-radius:50%;
+            background:rgba(0,0,0,.45);border:2px solid rgba(255,215,0,.5);
+            display:flex;align-items:center;justify-content:center;
+            font-size:24px;cursor:pointer;backdrop-filter:blur(6px);
+            transition:background .15s;-webkit-tap-highlight-color:transparent;
+            user-select:none;
+        }
+        .tbtn:active,.tbtn.pressed{background:rgba(255,215,0,.25)!important}
+        .tbtn-pause{
+            width:44px;height:44px;font-size:16px;
+            background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);
+            border-radius:50%;position:absolute;top:16px;right:16px;
+            display:none;z-index:100;cursor:pointer;
+            align-items:center;justify-content:center;
+        }
+
+        /* Responsive panels */
+        @media(max-width:520px){
+            .panel{padding:20px 16px;width:94vw!important;max-width:none!important;min-width:0!important}
+            .panel h1,.panel h2{font-size:1.5rem}
+            #menu{max-height:85vh}
+            #shop{width:96vw}
+            .items-grid{grid-template-columns:repeat(2,1fr)!important}
+            #gameUI{padding:8px 12px;min-width:150px;font-size:11px}
+            .sv{font-size:12px}
+            #hint{display:none!important}
+            #userBar{top:8px;right:8px;padding:6px 10px;font-size:11px}
+            #dots{bottom:140px}
+        }
+    </style>
+</head>
+<body>
+
+<div id="loading"><div class="spin"></div><h2>Loading…</h2></div>
+
+<!-- Login -->
+<div id="login" class="panel">
+    <h1>🏄 Subway Surfers</h1>
+    <p class="subtitle">Sign in or register to save your progress</p>
+    <input id="username" type="text"     placeholder="Username" autocomplete="off">
+    <input id="password" type="password" placeholder="Password">
+    <div><button onclick="login()">Login</button><button class="bb" onclick="register()">Register</button></div>
+    <div id="loginErr" class="err"></div>
+</div>
+
+<!-- User bar -->
+<div id="userBar" style="display:none">
+    👤 <span id="uname">User</span>
+    <button class="lbtn" onclick="logout()">Logout</button>
+</div>
+
+<!-- Main Menu -->
+<div id="menu" class="panel" style="display:none">
+    <h1>🎮 Subway Surfers</h1>
+    <div class="menu-section">
+        <h3>Select Character</h3>
+        <div class="char-grid" id="charGrid"></div>
+    </div>
+    <div class="menu-section">
+        <h3>Coins: <span id="menuCoins" style="color:var(--gold);font-size:1.2rem">0</span> 🪙</h3>
+        <button class="bg" onclick="showShop()">🛒 Shop</button>
+        <button onclick="startGame()">🚀 Play!</button>
+    </div>
+    <div class="menu-section">
+        <h3>🏆 High Scores</h3>
+        <div id="menuHS"></div>
+    </div>
+    <div id="adminPanel" class="admin-box" style="display:none">
+        <h3>⚙️ Admin</h3>
+        <div class="admin-grid">
+            <button class="abtn" onclick="openAdminPage()">🖥 Open Admin Panel</button>
+            <button class="abtn" onclick="addCoins(1000)">+1000 Coins</button>
+            <button class="abtn" onclick="unlockAll()">Unlock All</button>
+            <button class="abtn" onclick="resetProgress()">Reset Me</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ FULL ADMIN PANEL ══ -->
+<div id="adminPage">
+    <div class="ap-header">
+        <h2>⚙️ Admin Panel</h2>
+        <div style="display:flex;align-items:center;gap:16px">
+            <span class="ap-meta" id="apMeta"></span>
+            <button class="lbtn bb" onclick="closeAdminPage()">✕ Close</button>
+        </div>
+    </div>
+    <div class="ap-tabs">
+        <div class="ap-tab active" onclick="apTab('overview')" id="apt-overview">📊 Overview</div>
+        <div class="ap-tab" onclick="apTab('users')"    id="apt-users">👥 Users</div>
+        <div class="ap-tab" onclick="apTab('coins')"    id="apt-coins">🪙 Coins</div>
+        <div class="ap-tab" onclick="apTab('tools')"    id="apt-tools">🔧 Tools</div>
+    </div>
+    <div class="ap-body" id="apBody"></div>
+</div>
+
+<!-- HUD -->
+<div id="gameUI">
+    <div class="stat">Score <span id="score" class="sv">0</span></div>
+    <div class="stat">Coins <span id="coins" class="sv">0</span></div>
+    <div class="stat">Distance <span id="dist" class="sv">0m</span></div>
+    <div class="stat">Mult <span id="mult" class="sv">1×</span></div>
+    <div id="boostPill" class="pill pill-boost">⚡ <span id="boostLbl">Boost</span> <span id="boostT">0s</span>
+        <div class="bar"><div class="bar-fill" id="boostBar"></div></div>
+    </div>
+    <div id="boardPill" class="pill pill-board">🛹 Shield <span id="boardT">0s</span></div>
+</div>
+
+<!-- Lane dots (5 lanes) -->
+<div id="dots">
+    <div class="dot" id="d0"></div>
+    <div class="dot" id="d1"></div>
+    <div class="dot on" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div>
+</div>
+
+<!-- On-train indicator -->
+<div id="trainIndicator" style="display:none;position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(255,100,0,.85);padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:100;border:1px solid #FF6600;">🚂 ON TRAIN ROOF</div>
+
+<!-- Controls hint -->
+<div id="hint">← → &nbsp;Lane&nbsp;&nbsp;↑/Space Jump&nbsp;&nbsp;↓ Duck&nbsp;&nbsp;P Pause</div>
+
+<!-- Shop -->
+<div id="shop" class="panel" style="display:none">
+    <h2>🛒 Shop</h2>
+    <div class="stat" style="justify-content:center;margin-bottom:10px">Coins: <span id="shopC" class="sv" style="margin-left:8px">0</span> 🪙</div>
+    <div class="tabs">
+        <div class="tab active" onclick="shopTab('characters')">Characters</div>
+        <div class="tab" onclick="shopTab('skateboards')">Boards</div>
+        <div class="tab" onclick="shopTab('boosters')">Boosters</div>
+    </div>
+    <div id="sChars" class="items-grid"></div>
+    <div id="sBoards" class="items-grid" style="display:none"></div>
+    <div id="sBoosters" class="items-grid" style="display:none"></div>
+    <button onclick="hideShop()" style="margin-top:18px">← Back</button>
+</div>
+
+<!-- Game Over -->
+<div id="gameOver" class="panel" style="display:none">
+    <h2>💥 Game Over!</h2>
+    <div class="go-row">Final Score <span id="goScore">0</span></div>
+    <div class="go-row">Coins <span id="goCoins">0</span></div>
+    <div class="go-row">Distance <span id="goDist">0m</span></div>
+    <div style="margin:16px 0">
+        <h3 style="color:var(--gold);font-family:'Boogaloo',cursive;margin-bottom:8px">🏆 High Scores</h3>
+        <div id="hsList"></div>
+    </div>
+    <button onclick="startGame()">🔄 Play Again</button>
+    <button class="bb" onclick="backToMenu()">🏠 Menu</button>
+</div>
+
+<!-- Pause -->
+<div id="pauseBox">
+    <h2>⏸ Paused</h2>
+    <button onclick="togglePause()">▶ Resume</button>
+    <button class="bb" onclick="quitToMenu()">🏠 Quit</button>
+</div>
+
+<!-- Touch zone (swipe detection overlay) -->
+<div id="touchZone"></div>
+
+<!-- On-screen touch buttons -->
+<div id="touchBtns">
+    <div class="t-side">
+        <div class="tbtn" id="tb-left"  ontouchstart="tbStart('left',$event)"  ontouchend="tbEnd('left')">◀</div>
+        <div class="tbtn" id="tb-right" ontouchstart="tbStart('right',$event)" ontouchend="tbEnd('right')">▶</div>
+    </div>
+    <div class="t-side t-side-right">
+        <div class="tbtn" id="tb-jump" ontouchstart="tbStart('jump',$event)"  ontouchend="tbEnd('jump')">▲</div>
+        <div class="tbtn" id="tb-duck" ontouchstart="tbStart('duck',$event)"  ontouchend="tbEnd('duck')">▼</div>
+    </div>
+</div>
+
+<!-- Mobile pause button -->
+<div class="tbtn-pause" id="mobilePause" ontouchstart="togglePause()" style="display:none">⏸</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const LANES        = [-9, -4, 0, 4, 9];   // 5 lanes: trainL, left, center, right, trainR
+const TRAIN_LANE_L = 0;
+const TRAIN_LANE_R = 4;
+const TRAIN_ROOF_Y = 2.95;               // floor height when on train roof
+const LANE_FLOORS  = [TRAIN_ROOF_Y, 1.0, 1.0, 1.0, TRAIN_ROOF_Y];
+const BASE_SPD   = 0.24;
+const MAX_SPD    = 0.9;
+const JUMP_V     = 0.34;
+const GRAV       = 0.017;
+const BASE_Y     = 1.0;
+const SEG_COUNT  = 10;
+const SEG_LEN    = 40;
+const TOTAL_TRACK= SEG_COUNT * SEG_LEN;
+const USERS_KEY  = 'ssu3';
+const ADM_U      = 'Admin';
+const ADM_P      = 'coolB';
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let scene, cam, ren, animId;
+let player;
+let trackSegs = [], bldgs = [], obs = [], cns = [], pus = [], parts = [];
+let score=0, coinCount=0, distM=0, spd=BASE_SPD, mult=1;
+let jumping=false, ducking=false, dead=false, paused=false;
+let lane=2, targetX=LANES[2], playerY=BASE_Y, vy=0, floorY=BASE_Y;
+let frame=0, laneCd=0;
+let activePU=null, puTimer=0, puMax=0;
+let boardTimer=0;
+let allCoins=0, highScores=[];
+let selChar='jake', selBoard=null, equippedBooster=null;
+let currentUser=null, isAdmin=false;
+function onTrain(){return lane===TRAIN_LANE_L||lane===TRAIN_LANE_R;}
+
+// ─── SHOP DATA ────────────────────────────────────────────────────────────────
+const SHOP = {
+    characters:[
+        {id:'jake',   name:'Jake',   price:0,    owned:true,  icon:'🧑', desc:'The original',       color:0xFF6B6B},
+        {id:'tricky', name:'Tricky', price:500,  owned:false, icon:'🎩', desc:'Speedy & slick',      color:0x4ECDC4},
+        {id:'fresh',  name:'Fresh',  price:800,  owned:false, icon:'😎', desc:'Cool under pressure', color:0x9B59B6},
+        {id:'yutani', name:'Yutani', price:1200, owned:false, icon:'👽', desc:'Alien agility',       color:0x3498DB},
+        {id:'spike',  name:'Spike',  price:2000, owned:false, icon:'🦔', desc:'Unstoppable',         color:0xE74C3C}
+    ],
+    skateboards:[
+        {id:'basic',  name:'Basic',   price:0,    owned:true,  icon:'🛹', desc:'Standard ride',   sMult:1.0, color:0x888888},
+        {id:'rocket', name:'Rocket',  price:1000, owned:false, icon:'🚀', desc:'+30% speed',      sMult:1.3, color:0xFF6B6B},
+        {id:'hover',  name:'Hover',   price:1500, owned:false, icon:'🌀', desc:'+50% speed',      sMult:1.5, color:0x4ECDC4},
+        {id:'dragon', name:'Dragon',  price:2500, owned:false, icon:'🐉', desc:'+80% speed',      sMult:1.8, color:0xE74C3C}
+    ],
+    boosters:[
+        {id:'s2x',    name:'2× Score',    price:500,  owned:false, icon:'⭐', desc:'Double points 30s',  mult:2,        dur:1800},
+        {id:'s3x',    name:'3× Score',    price:800,  owned:false, icon:'🌟', desc:'Triple points 25s',  mult:3,        dur:1500},
+        {id:'magnet', name:'Coin Magnet', price:600,  owned:false, icon:'🧲', desc:'Auto-collect 20s',   magnet:true,   dur:1200},
+        {id:'jump',   name:'Super Jump',  price:700,  owned:false, icon:'🦘', desc:'Double jump 15s',    jBoost:2.0,    dur:900}
+    ]
+};
+
+// ─── USER SYSTEM ─────────────────────────────────────────────────────────────
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return h.toString(16)}
+function getUsers(){try{return JSON.parse(localStorage.getItem(USERS_KEY))||{}}catch{return{}}}
+function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u))}
+
+function register(){
+    const u=id('username').value.trim(), p=id('password').value;
+    if(!u||!p){showErr('Fill in both fields.');return}
+    if(u.length<3){showErr('Username must be 3+ chars.');return}
+    if(p.length<4){showErr('Password must be 4+ chars.');return}
+    const users=getUsers();
+    if(users[u]){showErr('Username taken.');return}
+    users[u]={passwordHash:hashStr(p),allCoins:0,highScores:[],
+        ownedItems:{characters:['jake'],skateboards:['basic'],boosters:[]},
+        selectedCharacter:'jake',selectedSkateboard:null,
+        stats:{gamesPlayed:0,totalCoins:0,totalDistance:0}};
+    saveUsers(users);
+    showErr('');
+    doLogin(u,false);
+}
+
+function login(){
+    const u=id('username').value.trim(), p=id('password').value;
+    if(!u||!p){showErr('Fill in both fields.');return}
+    if(u===ADM_U&&p===ADM_P){doLogin(u,true);return}
+    const users=getUsers(), usr=users[u];
+    if(!usr){showErr('User not found — register first.');return}
+    if(usr.passwordHash!==hashStr(p)&&usr.password!==p){showErr('Wrong password.');return}
+    doLogin(u,false);
+}
+
+function doLogin(u,admin){
+    currentUser=u; isAdmin=admin;
+    id('login').style.display='none';
+    id('userBar').style.display='flex';
+    id('uname').textContent=u+(admin?' ⚙️':'');
+    if(admin) id('adminPanel').style.display='block';
+    loadUD(); showMenu();
+}
+
+function logout(){
+    saveUD();
+    if(animId){cancelAnimationFrame(animId);animId=null}
+    if(ren&&ren.domElement.parentNode) document.body.removeChild(ren.domElement);
+    scene=null;ren=null;
+    currentUser=null;isAdmin=false;
+    ['menu','gameUI','gameOver','adminPanel','dots','hint'].forEach(i=>hide(i));
+    id('userBar').style.display='none';
+    id('login').style.display='block';
+    id('username').value='';id('password').value='';
+}
+
+function showErr(m){const e=id('loginErr');e.textContent=m;e.style.display=m?'block':'none'}
+
+// ─── USER DATA ────────────────────────────────────────────────────────────────
+function loadUD(){
+    if(!currentUser)return;
+    const ud=getUsers()[currentUser];if(!ud)return;
+    allCoins=ud.allCoins||0; highScores=ud.highScores||[];
+    if(ud.ownedItems){
+        ['characters','skateboards','boosters'].forEach(cat=>{
+            (ud.ownedItems[cat]||[]).forEach(xid=>{
+                const it=SHOP[cat].find(i=>i.id===xid);if(it)it.owned=true;
+            });
+        });
+    }
+    selChar=ud.selectedCharacter||'jake';
+    selBoard=ud.selectedSkateboard||null;
+}
+
+function saveUD(){
+    if(!currentUser)return;
+    const users=getUsers(), ud=users[currentUser]||{};
+    ud.allCoins=allCoins; ud.highScores=highScores.slice(0,10);
+    ud.ownedItems={
+        characters:SHOP.characters.filter(c=>c.owned).map(c=>c.id),
+        skateboards:SHOP.skateboards.filter(s=>s.owned).map(s=>s.id),
+        boosters:SHOP.boosters.filter(b=>b.owned).map(b=>b.id)
+    };
+    ud.selectedCharacter=selChar; ud.selectedSkateboard=selBoard;
+    if(!ud.stats)ud.stats={gamesPlayed:0,totalCoins:0,totalDistance:0};
+    users[currentUser]=ud; saveUsers(users);
+}
+
+// ─── ADMIN ────────────────────────────────────────────────────────────────────
+function addCoins(n){if(!isAdmin)return;allCoins+=n;updateMenu();saveUD();alert(`✅ Added ${n} coins`)}
+function unlockAll(){if(!isAdmin)return;Object.keys(SHOP).forEach(k=>SHOP[k].forEach(i=>i.owned=true));updateMenu();saveUD();alert('✅ All unlocked!')}
+function resetProgress(){
+    if(!isAdmin||!confirm('Reset your own progress?'))return;
+    allCoins=0;highScores=[];
+    SHOP.characters.forEach(i=>i.owned=i.id==='jake');
+    SHOP.skateboards.forEach(i=>i.owned=i.id==='basic');
+    SHOP.boosters.forEach(i=>i.owned=false);
+    selChar='jake';selBoard=null;updateMenu();saveUD();alert('✅ Reset!');
+}
+
+// ─── ADMIN PANEL ─────────────────────────────────────────────────────────────
+let curApTab='overview';
+
+function openAdminPage(){
+    if(!isAdmin)return;
+    id('menu').style.display='none';
+    id('adminPage').style.display='flex';
+    id('apMeta').textContent=`Logged in as ${currentUser}  •  ${Object.keys(getUsers()).length} users`;
+    apTab('overview');
+}
+
+function closeAdminPage(){
+    id('adminPage').style.display='none';
+    id('menu').style.display='block';
+    updateMenu();
+}
+
+function apTab(t){
+    curApTab=t;
+    ['overview','users','coins','tools'].forEach(k=>{
+        id('apt-'+k).classList.toggle('active',k===t);
+    });
+    const body=id('apBody');
+    if(t==='overview') body.innerHTML=renderApOverview();
+    if(t==='users')    body.innerHTML=renderApUsers();
+    if(t==='coins')    body.innerHTML=renderApCoins();
+    if(t==='tools')    body.innerHTML=renderApTools();
+}
+
+function renderApOverview(){
+    const users=getUsers();
+    const ulist=Object.keys(users);
+    const totalCoins=ulist.reduce((s,u)=>s+(users[u].allCoins||0),0);
+    const totalGames=ulist.reduce((s,u)=>s+(users[u].stats?.gamesPlayed||0),0);
+    const topScore=ulist.reduce((mx,u)=>Math.max(mx,users[u].highScores?.[0]?.score||0),0);
+    const totalDist=ulist.reduce((s,u)=>s+(users[u].stats?.totalDistance||0),0);
+    return `
+    <div class="stat-cards">
+        <div class="stat-card"><div class="sc-val">${ulist.length}</div><div class="sc-lbl">Total Users</div></div>
+        <div class="stat-card"><div class="sc-val">${totalCoins.toLocaleString()}</div><div class="sc-lbl">Coins in Circulation</div></div>
+        <div class="stat-card"><div class="sc-val">${totalGames}</div><div class="sc-lbl">Games Played</div></div>
+        <div class="stat-card"><div class="sc-val">${topScore.toLocaleString()}</div><div class="sc-lbl">All-Time Best Score</div></div>
+        <div class="stat-card"><div class="sc-val">${Math.floor(totalDist/1000)}km</div><div class="sc-lbl">Total Distance Run</div></div>
+    </div>
+    <h3 style="color:#FF4444;font-family:'Boogaloo',cursive;margin-bottom:12px">🏆 Leaderboard</h3>
+    <table class="u-table">
+        <tr><th>#</th><th>User</th><th>Best Score</th><th>Coins</th><th>Games</th></tr>
+        ${ulist.sort((a,b)=>(users[b].highScores?.[0]?.score||0)-(users[a].highScores?.[0]?.score||0))
+            .map((u,i)=>`<tr>
+                <td style="color:#888">${i+1}</td>
+                <td class="uname-cell">${u} ${u===ADM_U?'<span class="badge badge-admin">ADMIN</span>':'<span class="badge badge-user">user</span>'}</td>
+                <td style="color:var(--gold);font-weight:900">${(users[u].highScores?.[0]?.score||0).toLocaleString()}</td>
+                <td>${(users[u].allCoins||0).toLocaleString()}</td>
+                <td>${users[u].stats?.gamesPlayed||0}</td>
+            </tr>`).join('')}
+    </table>`;
+}
+
+function renderApUsers(){
+    const users=getUsers();
+    return `
+    <table class="u-table">
+        <tr><th>User</th><th>Coins</th><th>Games</th><th>Distance</th><th>Actions</th></tr>
+        ${Object.keys(users).map(u=>`<tr>
+            <td class="uname-cell">${u} ${u===ADM_U?'<span class="badge badge-admin">ADMIN</span>':'<span class="badge badge-user">user</span>'}</td>
+            <td>${(users[u].allCoins||0).toLocaleString()} 🪙</td>
+            <td>${users[u].stats?.gamesPlayed||0}</td>
+            <td>${(users[u].stats?.totalDistance||0).toLocaleString()}m</td>
+            <td><div class="row-btns">
+                <button class="rbtn-unlock" onclick="apUnlockUser('${u}')">Unlock All</button>
+                <button class="rbtn-reset"  onclick="apResetUser('${u}')">Reset</button>
+                ${u!==ADM_U?`<button class="rbtn-del" onclick="apDeleteUser('${u}')">Delete</button>`:''}
+            </div></td>
+        </tr>`).join('')}
+    </table>`;
+}
+
+function renderApCoins(){
+    const users=getUsers();
+    return `
+    <p style="color:#888;margin-bottom:16px;font-size:13px">Add or set coins for any user.</p>
+    <table class="u-table">
+        <tr><th>User</th><th>Current Coins</th><th>Edit</th></tr>
+        ${Object.keys(users).map(u=>`<tr>
+            <td class="uname-cell">${u}</td>
+            <td id="cbal-${u}" style="color:var(--gold);font-weight:900">${(users[u].allCoins||0).toLocaleString()}</td>
+            <td>
+                <div class="coin-editor">
+                    <input type="number" id="camount-${u}" value="1000" min="0" max="999999" placeholder="Amount">
+                    <select id="cmode-${u}">
+                        <option value="add">Add</option>
+                        <option value="set">Set</option>
+                        <option value="sub">Subtract</option>
+                    </select>
+                    <button class="rbtn-coins" onclick="apEditCoins('${u}')">Apply</button>
+                </div>
+            </td>
+        </tr>`).join('')}
+    </table>`;
+}
+
+function renderApTools(){
+    return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
+        <div class="stat-card" style="text-align:left;padding:18px">
+            <div style="font-size:1.4rem;margin-bottom:8px">🪙 Give All Users Coins</div>
+            <div class="coin-editor" style="margin:8px 0">
+                <input type="number" id="giveAllAmt" value="500" min="1" max="99999" style="width:100px">
+                <button class="rbtn-coins" onclick="apGiveAll()">Give</button>
+            </div>
+        </div>
+        <div class="stat-card" style="text-align:left;padding:18px">
+            <div style="font-size:1.4rem;margin-bottom:8px">🔓 Unlock All Users</div>
+            <p style="font-size:12px;color:#888;margin-bottom:10px">Unlock every shop item for every user.</p>
+            <button class="rbtn-unlock" onclick="apUnlockAllUsers()">Unlock Everyone</button>
+        </div>
+        <div class="stat-card" style="text-align:left;padding:18px">
+            <div style="font-size:1.4rem;margin-bottom:8px">🗑 Wipe All Data</div>
+            <p style="font-size:12px;color:#888;margin-bottom:10px">Delete all users except Admin.</p>
+            <button class="rbtn-del" onclick="apWipeUsers()">Wipe Users</button>
+        </div>
+        <div class="stat-card" style="text-align:left;padding:18px">
+            <div style="font-size:1.4rem;margin-bottom:8px">📋 Export Data</div>
+            <p style="font-size:12px;color:#888;margin-bottom:10px">Copy all user data to clipboard.</p>
+            <button class="rbtn-unlock" onclick="apExport()">Export JSON</button>
+        </div>
+    </div>`;
+}
+
+// Admin actions
+function apUnlockUser(u){
+    const users=getUsers();
+    if(!users[u])return;
+    if(!confirm(`Unlock all items for ${u}?`))return;
+    users[u].ownedItems={characters:SHOP.characters.map(c=>c.id),skateboards:SHOP.skateboards.map(s=>s.id),boosters:SHOP.boosters.map(b=>b.id)};
+    // Also apply to current session if it's us
+    if(u===currentUser) Object.keys(SHOP).forEach(k=>SHOP[k].forEach(i=>i.owned=true));
+    saveUsers(users);apTab('users');
+}
+
+function apResetUser(u){
+    if(!confirm(`Reset ALL progress for ${u}?`))return;
+    const users=getUsers();
+    if(!users[u])return;
+    users[u].allCoins=0;users[u].highScores=[];
+    users[u].ownedItems={characters:['jake'],skateboards:['basic'],boosters:[]};
+    users[u].selectedCharacter='jake';users[u].selectedSkateboard=null;
+    users[u].stats={gamesPlayed:0,totalCoins:0,totalDistance:0};
+    if(u===currentUser){allCoins=0;highScores=[];selChar='jake';selBoard=null;SHOP.characters.forEach(i=>i.owned=i.id==='jake');SHOP.skateboards.forEach(i=>i.owned=i.id==='basic');SHOP.boosters.forEach(i=>i.owned=false);}
+    saveUsers(users);apTab('users');
+}
+
+function apDeleteUser(u){
+    if(u===ADM_U){alert("Can't delete admin.");return}
+    if(!confirm(`Permanently delete user "${u}"?`))return;
+    const users=getUsers();delete users[u];saveUsers(users);apTab('users');
+}
+
+function apEditCoins(u){
+    const amt=parseInt(id('camount-'+u).value)||0;
+    const mode=id('cmode-'+u).value;
+    const users=getUsers();if(!users[u])return;
+    if(mode==='add') users[u].allCoins=(users[u].allCoins||0)+amt;
+    if(mode==='set') users[u].allCoins=amt;
+    if(mode==='sub') users[u].allCoins=Math.max(0,(users[u].allCoins||0)-amt);
+    if(u===currentUser) allCoins=users[u].allCoins;
+    saveUsers(users);
+    id('cbal-'+u).textContent=users[u].allCoins.toLocaleString();
+}
+
+function apGiveAll(){
+    const amt=parseInt(id('giveAllAmt').value)||0;
+    if(!confirm(`Give ${amt} coins to ALL users?`))return;
+    const users=getUsers();
+    Object.keys(users).forEach(u=>{users[u].allCoins=(users[u].allCoins||0)+amt});
+    allCoins=users[currentUser]?.allCoins||allCoins;
+    saveUsers(users);alert('✅ Done!');apTab('tools');
+}
+
+function apUnlockAllUsers(){
+    if(!confirm('Unlock all items for every user?'))return;
+    const users=getUsers();
+    const all={characters:SHOP.characters.map(c=>c.id),skateboards:SHOP.skateboards.map(s=>s.id),boosters:SHOP.boosters.map(b=>b.id)};
+    Object.keys(users).forEach(u=>{users[u].ownedItems=JSON.parse(JSON.stringify(all))});
+    Object.keys(SHOP).forEach(k=>SHOP[k].forEach(i=>i.owned=true));
+    saveUsers(users);alert('✅ Done!');
+}
+
+function apWipeUsers(){
+    if(!confirm('Delete ALL non-admin users? This cannot be undone.'))return;
+    const users=getUsers();
+    Object.keys(users).filter(u=>u!==ADM_U).forEach(u=>delete users[u]);
+    saveUsers(users);alert('✅ Wiped.');apTab('users');
+}
+
+function apExport(){
+    const data=localStorage.getItem(USERS_KEY)||'{}';
+    navigator.clipboard.writeText(data).then(()=>alert('✅ Copied to clipboard!')).catch(()=>{
+        const ta=document.createElement('textarea');ta.value=data;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('✅ Copied!');
+    });
+}
+
+// ─── MENU/SHOP UI ─────────────────────────────────────────────────────────────
+function showMenu(){
+    hide('gameOver');hide('gameUI');hide('dots');hide('hint');
+    show('menu');
+    if(!scene)initThree();
+    updateMenu();
+}
+
+function updateMenu(){
+    id('menuCoins').textContent=allCoins;
+    // char grid
+    const g=id('charGrid');g.innerHTML='';
+    SHOP.characters.forEach(c=>{
+        const d=document.createElement('div');
+        d.className='char-card'+(selChar===c.id?' selected':'')+(c.owned?'':' locked');
+        d.innerHTML=`<span class="icon">${c.icon}</span><span>${c.name}</span>`;
+        d.title=c.owned?`Select ${c.name}`:`Locked (${c.price}🪙)`;
+        if(c.owned)d.onclick=()=>{selChar=c.id;updateMenu()};
+        g.appendChild(d);
+    });
+    // high scores
+    const hs=id('menuHS');
+    if(!highScores.length){hs.innerHTML='<p style="color:#555;font-size:12px">No scores yet</p>';return}
+    hs.innerHTML=highScores.slice(0,5).map((e,i)=>
+        `<div class="hs" style="display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:7px;padding:6px 12px;margin:3px 0;font-size:12px">
+            <span>${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${e.date||''}</span>
+            <strong style="color:var(--gold)">${e.score.toLocaleString()}</strong>
+        </div>`
+    ).join('');
+}
+
+function showShop(){
+    hide('menu');show('shop');
+    id('shopC').textContent=allCoins;
+    renderShopTab('characters');renderShopTab('skateboards');renderShopTab('boosters');
+    shopTab('characters');
+}
+function hideShop(){hide('shop');show('menu');updateMenu()}
+
+let curTab='characters';
+function shopTab(t){
+    curTab=t;
+    const map={characters:'sChars',skateboards:'sBoards',boosters:'sBoosters'};
+    Object.keys(map).forEach(k=>id(map[k]).style.display=k===t?'grid':'none');
+    document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['characters','skateboards','boosters'][i]===t));
+}
+
+function renderShopTab(cat){
+    const cont=id({characters:'sChars',skateboards:'sBoards',boosters:'sBoosters'}[cat]);
+    cont.innerHTML=SHOP[cat].map(item=>{
+        const owned=item.owned;
+        const equip=(cat==='characters'&&selChar===item.id)||(cat==='skateboards'&&selBoard===item.id)||(cat==='boosters'&&equippedBooster===item.id);
+        return `<div class="item${equip?' equipped':''}" onclick="shopAct('${cat}','${item.id}')">
+            <div class="iicon">${item.icon}</div>
+            <div class="iname">${item.name}</div>
+            <div class="idesc">${item.desc}</div>
+            ${owned?`<div class="iowned">✓ Owned</div><div style="font-size:10px;color:#888;margin-top:3px">${equip?'✅ Equipped':'Tap to equip'}</div>`
+                   :`<div class="iprice">🪙 ${item.price}</div>`}
+        </div>`;
+    }).join('');
+}
+
+function shopAct(cat,xid){
+    const item=SHOP[cat].find(i=>i.id===xid);if(!item)return;
+    if(!item.owned){
+        if(allCoins<item.price){alert(`Need ${item.price}🪙`);return}
+        if(!confirm(`Buy ${item.name} for ${item.price}🪙?`))return;
+        allCoins-=item.price;item.owned=true;
+        id('shopC').textContent=allCoins;saveUD();
+    }
+    if(cat==='characters')  selChar=xid;
+    if(cat==='skateboards') selBoard=selBoard===xid?null:xid;
+    if(cat==='boosters')    equippedBooster=equippedBooster===xid?null:xid;
+    renderShopTab(cat);
+}
+
+// ─── TEXTURE FACTORY ─────────────────────────────────────────────────────────
+function makeTex(w,h,drawFn){
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const ctx=c.getContext('2d');drawFn(ctx,w,h);
+    const t=new THREE.CanvasTexture(c);
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;
+}
+const roadTex=(()=>{
+    const t=makeTex(256,256,(ctx,W,H)=>{
+        ctx.fillStyle='#3a3a4a';ctx.fillRect(0,0,W,H);
+        for(let i=0;i<2000;i++){const x=Math.random()*W,y=Math.random()*H,v=50+Math.random()*30|0;ctx.fillStyle=`rgb(${v},${v},${v+6})`;ctx.beginPath();ctx.arc(x,y,Math.random()*1.4,0,6.28);ctx.fill()}
+        ctx.strokeStyle='rgba(10,10,20,.55)';ctx.lineWidth=.8;
+        for(let i=0;i<8;i++){ctx.beginPath();ctx.moveTo(Math.random()*W,Math.random()*H);for(let s=0;s<4;s++)ctx.lineTo(Math.random()*W,Math.random()*H);ctx.stroke()}
+    });t.repeat.set(3,40);return t;
+})();
+const sidewalkTex=(()=>{
+    const t=makeTex(128,128,(ctx,W,H)=>{
+        ctx.fillStyle='#c8c8a0';ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle='#a0a080';ctx.lineWidth=1.5;
+        for(let x=0;x<=W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+        for(let y=0;y<=H;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+        for(let i=0;i<80;i++){ctx.fillStyle=`rgba(150,140,110,${Math.random()*.35})`;ctx.beginPath();ctx.arc(Math.random()*W,Math.random()*H,.8,0,6.28);ctx.fill()}
+    });t.repeat.set(2,16);return t;
+})();
+const grassTex=(()=>{
+    const t=makeTex(256,256,(ctx,W,H)=>{
+        ctx.fillStyle='#4a7a36';ctx.fillRect(0,0,W,H);
+        for(let i=0;i<3500;i++){const x=Math.random()*W,y=Math.random()*H,g=60+Math.random()*50|0;ctx.fillStyle=`rgb(${g-20},${g+20},${g-30})`;ctx.fillRect(x,y,1+Math.random()*2,1+Math.random()*3)}
+    });t.repeat.set(6,60);return t;
+})();
+function brickTex(r,g,b){
+    return makeTex(128,128,(ctx,W,H)=>{
+        ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=2;
+        for(let row=0;row<H/16+1;row++){const off=(row%2)*16;for(let col=0;col<W/32+1;col++){
+            const x=col*32-off,y=row*16;
+            const dv=Math.random()*22-11|0;
+            ctx.fillStyle=`rgb(${r+dv},${g+dv},${b+dv})`;ctx.fillRect(x+2,y+2,28,12);
+            ctx.strokeRect(x+1,y+1,30,14);
+        }}
+    });
+}
+function concreteTex(r,g,b){
+    return makeTex(128,128,(ctx,W,H)=>{
+        ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(0,0,W,H);
+        for(let i=0;i<900;i++){const v=Math.random()*28-14|0;ctx.fillStyle=`rgba(${r+v},${g+v},${b+v},.4)`;ctx.fillRect(Math.random()*W,Math.random()*H,2,2)}
+        ctx.strokeStyle='rgba(0,0,0,.18)';ctx.lineWidth=1;
+        for(let y=0;y<H;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+        for(let x=0;x<W;x+=48){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+    });
+}
+
+// ─── THREE.JS SETUP ───────────────────────────────────────────────────────────
+let clouds=[];
+function initThree(){
+    scene=new THREE.Scene();
+    scene.fog=new THREE.FogExp2(0x88bbdd,.009);
+
+    // Sky dome
+    const skyGeo=new THREE.SphereGeometry(400,16,8);
+    const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,
+        uniforms:{topC:{value:new THREE.Color(0x1a6daa)},botC:{value:new THREE.Color(0xb8d8f0)}},
+        vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+        fragmentShader:`uniform vec3 topC,botC;varying vec3 vP;void main(){float t=clamp(vP.y/200.,0.,1.);gl_FragColor=vec4(mix(botC,topC,t),1.);}`
+    });
+    scene.add(new THREE.Mesh(skyGeo,skyMat));
+
+    // Sun disc
+    const sunDisc=new THREE.Mesh(new THREE.CircleGeometry(16,24),new THREE.MeshBasicMaterial({color:0xFFE87A}));
+    sunDisc.position.set(80,115,-350);scene.add(sunDisc);
+    // Halo ring around sun
+    const halo=new THREE.Mesh(new THREE.RingGeometry(16,26,24),new THREE.MeshBasicMaterial({color:0xFFE87A,transparent:true,opacity:.18,side:THREE.DoubleSide}));
+    halo.position.copy(sunDisc.position);scene.add(halo);
+
+    // Clouds
+    clouds=[];
+    const cMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.82});
+    for(let i=0;i<20;i++){
+        const g=new THREE.Group();
+        const puffs=3+Math.floor(Math.random()*4);
+        for(let p=0;p<puffs;p++){
+            const r=3+Math.random()*5;
+            const m=new THREE.Mesh(new THREE.SphereGeometry(r,7,5),cMat);
+            m.position.set(p*r*.9-puffs*r*.45,Math.random()*r*.5,Math.random()*r*.4);g.add(m);
+        }
+        g.position.set((Math.random()-.5)*300,38+Math.random()*55,-60-Math.random()*320);
+        scene.add(g);clouds.push({mesh:g,spd:.015+Math.random()*.035});
+    }
+
+    cam=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,500);
+    cam.position.set(0,6,16);cam.lookAt(0,1,-4);
+
+    ren=new THREE.WebGLRenderer({antialias:true});
+    ren.setSize(innerWidth,innerHeight);
+    ren.shadowMap.enabled=true;
+    ren.shadowMap.type=THREE.PCFSoftShadowMap;
+    ren.setPixelRatio(Math.min(devicePixelRatio,2));
+    document.body.appendChild(ren.domElement);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xd0e8ff,.55));
+    const sun=new THREE.DirectionalLight(0xfff5cc,1.3);
+    sun.position.set(8,28,8);sun.castShadow=true;
+    sun.shadow.mapSize.set(1024,1024);
+    sun.shadow.camera.left=-30;sun.shadow.camera.right=30;sun.shadow.camera.top=30;sun.shadow.camera.bottom=-30;
+    sun.shadow.camera.far=120;scene.add(sun);
+    // warm fill
+    const fill=new THREE.DirectionalLight(0xffddaa,.3);fill.position.set(-6,4,-8);scene.add(fill);
+
+    buildTrack();buildBuildings();buildStreetFurniture();buildSideTrains();buildPlayer();
+
+    window.addEventListener('resize',onResize);
+    document.addEventListener('keydown',onKey);
+    document.addEventListener('keyup',onKeyUp);
+    initMobileControls();
+}
+
+// ─── WORLD ────────────────────────────────────────────────────────────────────
+function buildTrack(){
+    trackSegs=[];
+    const trackW=LANES[2]-LANES[0]+4;
+    const roadMat=new THREE.MeshLambertMaterial({map:roadTex});
+    const swMat  =new THREE.MeshLambertMaterial({map:sidewalkTex});
+    const gMat   =new THREE.MeshLambertMaterial({map:grassTex});
+    const whiteMat=new THREE.MeshLambertMaterial({color:0xffffff});
+    const yellowMat=new THREE.MeshLambertMaterial({color:0xFFDD00});
+    const railMat =new THREE.MeshLambertMaterial({color:0x999999,metalness:.8});
+
+    for(let s=0;s<SEG_COUNT;s++){
+        const g=new THREE.Group();
+
+        // Road surface
+        const r=new THREE.Mesh(new THREE.PlaneGeometry(trackW,SEG_LEN),roadMat);
+        r.rotation.x=-Math.PI/2;r.receiveShadow=true;g.add(r);
+
+        // Dashed centre lane dividers
+        for(let l=1;l<3;l++){
+            const lx=LANES[0]+l*4;
+            for(let d=0;d<6;d++){
+                const dash=new THREE.Mesh(new THREE.PlaneGeometry(.18,SEG_LEN*.08),whiteMat);
+                dash.rotation.x=-Math.PI/2;
+                dash.position.set(lx,.02,-SEG_LEN*.45+d*SEG_LEN*.16);
+                g.add(dash);
+            }
+        }
+
+        // Yellow centre line
+        const cLine=new THREE.Mesh(new THREE.PlaneGeometry(.12,SEG_LEN*.9),yellowMat);
+        cLine.rotation.x=-Math.PI/2;cLine.position.set(0,.015,0);g.add(cLine);
+
+        // Sidewalks
+        [-1,1].forEach(side=>{
+            const sw=new THREE.Mesh(new THREE.BoxGeometry(2.2,.32,SEG_LEN),swMat);
+            sw.position.set(side*(trackW/2+1.1),.16,0);sw.receiveShadow=true;g.add(sw);
+            // Curb edge
+            const curb=new THREE.Mesh(new THREE.BoxGeometry(.18,.38,SEG_LEN),new THREE.MeshLambertMaterial({color:0x999977}));
+            curb.position.set(side*(trackW/2+.08),.19,0);g.add(curb);
+        });
+
+        // Rails along sides of track
+        [-1,1].forEach(side=>{
+            const rail=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,SEG_LEN,6),railMat);
+            rail.rotation.x=Math.PI/2;
+            rail.position.set(side*(trackW/2-.3),.55,0);g.add(rail);
+            // Rail posts every 6 units
+            for(let p=0;p<SEG_LEN/6;p++){
+                const post=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.6,6),railMat);
+                post.position.set(side*(trackW/2-.3),.3,-SEG_LEN/2+p*6+3);g.add(post);
+            }
+        });
+
+        // Grass
+        [-1,1].forEach(side=>{
+            const grass=new THREE.Mesh(new THREE.PlaneGeometry(40,SEG_LEN),gMat);
+            grass.rotation.x=-Math.PI/2;grass.position.set(side*(trackW/2+22),-.02,0);g.add(grass);
+        });
+
+        // Occasional crosswalk stripes near middle of segment
+        if(s%3===0){
+            for(let stripe=0;stripe<5;stripe++){
+                const sm=new THREE.Mesh(new THREE.PlaneGeometry(trackW*.3,1.1),whiteMat);
+                sm.rotation.x=-Math.PI/2;sm.position.set(-4+stripe*3,.02,0);g.add(sm);
+            }
+        }
+
+        // Manhole cover (decorative)
+        const mh=new THREE.Mesh(new THREE.CircleGeometry(1,18),new THREE.MeshLambertMaterial({color:0x555566}));
+        mh.rotation.x=-Math.PI/2;mh.position.set(LANES[1],.02,-SEG_LEN*.25);g.add(mh);
+        const mhRing=new THREE.Mesh(new THREE.RingGeometry(.85,.95,18),new THREE.MeshLambertMaterial({color:0x777788}));
+        mhRing.rotation.x=-Math.PI/2;mhRing.position.set(LANES[1],.022,-SEG_LEN*.25);g.add(mhRing);
+
+        g.position.z=-s*SEG_LEN;
+        scene.add(g);trackSegs.push({mesh:g});
+    }
+}
+
+function buildBuildings(){
+    bldgs=[];
+    const brickPalette=[
+        [[180,100,80],[160,90,70]],[[140,120,100],[120,100,80]],
+        [[100,120,150],[80,100,130]],[[160,155,100],[140,135,80]],
+        [[120,100,150],[100,80,130]],[[180,140,100],[160,120,80]]
+    ];
+    const trackW=LANES[2]-LANES[0]+4;
+    for(let i=0;i<45;i++){
+        [-1,1].forEach(side=>{
+            const w=5+Math.random()*10, h=8+Math.random()*22, d=5+Math.random()*9;
+            const pal=brickPalette[Math.floor(Math.random()*brickPalette.length)];
+            const useBrick=Math.random()<.6;
+            const [r,g,b]=pal[0];
+            const tex=useBrick?brickTex(r,g,b):concreteTex(r,g,b);
+            tex.repeat.set(Math.max(1,Math.round(w/4)),Math.max(1,Math.round(h/4)));
+
+            const mesh=new THREE.Mesh(
+                new THREE.BoxGeometry(w,h,d),
+                new THREE.MeshLambertMaterial({map:tex})
+            );
+            mesh.castShadow=true;mesh.receiveShadow=true;
+            const xOff=side*(trackW/2+2.2+w/2+Math.random()*4);
+            const z=-i*12-Math.random()*6;
+            mesh.position.set(xOff,h/2,z);
+            scene.add(mesh);
+
+            // Lit windows
+            const winCols=Math.max(1,Math.floor(w/2.8));
+            const winRows=Math.max(1,Math.floor(h/3.2));
+            for(let wr=0;wr<winRows;wr++){
+                for(let wc=0;wc<winCols;wc++){
+                    const lit=Math.random()<.65;
+                    const wGeo=new THREE.PlaneGeometry(.9,1.0);
+                    const wMat=new THREE.MeshBasicMaterial({
+                        color:lit?0xFFFF99:0x1a2535,
+                        transparent:!lit,opacity:lit?1:.7
+                    });
+                    const wm=new THREE.Mesh(wGeo,wMat);
+                    wm.position.set(-w/2+1.4+wc*2.8, wr*3.2-h/2+2, d/2+.02);
+                    mesh.add(wm);
+                    // Window frame
+                    const frame=new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.15),new THREE.MeshBasicMaterial({color:0x888888}));
+                    frame.position.set(-w/2+1.4+wc*2.8, wr*3.2-h/2+2, d/2+.01);
+                    mesh.add(frame);
+                }
+            }
+
+            // Rooftop detail
+            const roofBox=new THREE.Mesh(
+                new THREE.BoxGeometry(w*.6,.8,d*.5),
+                new THREE.MeshLambertMaterial({color:0x666677})
+            );
+            roofBox.position.y=h/2+.4;mesh.add(roofBox);
+
+            // Water tower on some buildings
+            if(Math.random()<.2){
+                const wt=new THREE.Group();
+                const tank=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,2,10),new THREE.MeshLambertMaterial({color:0x8B6914}));
+                tank.position.y=1;wt.add(tank);
+                const roof=new THREE.Mesh(new THREE.ConeGeometry(1.4,1,10),new THREE.MeshLambertMaterial({color:0x5a4510}));
+                roof.position.y=2.5;wt.add(roof);
+                for(let leg=0;leg<6;leg++){
+                    const l=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,1.5,4),new THREE.MeshLambertMaterial({color:0x666633}));
+                    l.position.set(Math.cos(leg/6*Math.PI*2)*1.1,-.5,Math.sin(leg/6*Math.PI*2)*1.1);
+                    l.rotation.z=Math.atan2(Math.cos(leg/6*Math.PI*2)*1.1,.75)*.3;
+                    wt.add(l);
+                }
+                wt.position.set(-w*.2,h/2+1,d*.1);mesh.add(wt);
+            }
+
+            // Billboard on taller buildings
+            if(h>18&&Math.random()<.35){
+                const bColors=[0xFF4444,0x44AAFF,0xFFAA00,0x44FF88];
+                const bb=new THREE.Mesh(
+                    new THREE.BoxGeometry(w*.55,.15,3.5),
+                    new THREE.MeshBasicMaterial({color:bColors[Math.floor(Math.random()*bColors.length)]})
+                );
+                bb.position.set(0,h/2+.5+Math.random()*2,-d/2-.1);
+                bb.rotation.y=Math.PI;
+                mesh.add(bb);
+            }
+
+            bldgs.push({mesh,baseZ:z});
+        });
+    }
+}
+
+// Street lamps, fire hydrants, trash cans
+let furniture=[];
+function buildStreetFurniture(){
+    furniture=[];
+    const trackW=LANES[2]-LANES[0]+4;
+    const lampMat =new THREE.MeshLambertMaterial({color:0x555544});
+    const glassMat=new THREE.MeshBasicMaterial({color:0xFFFF88,transparent:true,opacity:.9});
+    const hydrantMat=new THREE.MeshLambertMaterial({color:0xDD2222});
+    const binMat  =new THREE.MeshLambertMaterial({color:0x446644});
+
+    for(let i=0;i<30;i++){
+        [-1,1].forEach(side=>{
+            const z=-i*13-2;
+            const xBase=side*(trackW/2+1.8);
+
+            // Street lamp
+            const lamp=new THREE.Group();
+            const pole=new THREE.Mesh(new THREE.CylinderGeometry(.1,.12,5.5,8),lampMat);
+            pole.position.y=2.75;lamp.add(pole);
+            const arm=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,1.4,6),lampMat);
+            arm.rotation.z=Math.PI/2;arm.position.set(side*.7,5.4,0);lamp.add(arm);
+            const globe=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),glassMat);
+            globe.position.set(side*1.4,5.4,0);lamp.add(globe);
+            // Glow point light on every 4th lamp (perf)
+            if(i%4===0){
+                const pt=new THREE.PointLight(0xFFEEAA,.5,12);
+                pt.position.copy(globe.position);lamp.add(pt);
+            }
+            lamp.position.set(xBase,0,z);
+            scene.add(lamp);furniture.push({mesh:lamp,baseZ:z});
+
+            // Hydrant every 5
+            if(i%5===0){
+                const hyd=new THREE.Group();
+                const body=new THREE.Mesh(new THREE.CylinderGeometry(.22,.28,.6,8),hydrantMat);
+                body.position.y=.3;hyd.add(body);
+                const top=new THREE.Mesh(new THREE.CylinderGeometry(.14,.22,.22,8),hydrantMat);
+                top.position.y=.71;hyd.add(top);
+                const noz=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.22,6),hydrantMat);
+                noz.rotation.z=Math.PI/2;noz.position.set(side*.3,.4,0);hyd.add(noz);
+                hyd.position.set(xBase+side*.6,0,z+5);
+                scene.add(hyd);furniture.push({mesh:hyd,baseZ:z+5});
+            }
+
+            // Trash bin every 7
+            if(i%7===0){
+                const bin=new THREE.Mesh(new THREE.CylinderGeometry(.25,.22,.7,8),binMat);
+                bin.position.set(xBase,0.35,z-3);
+                scene.add(bin);furniture.push({mesh:bin,baseZ:z-3});
+            }
+        });
+    }
+}
+
+function buildPlayer(){
+    if(player){scene.remove(player)}
+    const ch=SHOP.characters.find(c=>c.id===selChar)||SHOP.characters[0];
+    const g=new THREE.Group();
+
+    const mk=(geo,mat,py,cast=true)=>{const m=new THREE.Mesh(geo,mat);m.position.y=py;if(cast)m.castShadow=true;return m};
+
+    g.add(mk(new THREE.BoxGeometry(.7,1.0,.4),new THREE.MeshLambertMaterial({color:ch.color}),.5));
+    g.add(mk(new THREE.SphereGeometry(.3,10,10),new THREE.MeshLambertMaterial({color:0xFFD5A8}),1.25));
+    // arms
+    const aGeo=new THREE.BoxGeometry(.18,.6,.18);const aMat=new THREE.MeshLambertMaterial({color:ch.color});
+    const la=mk(aGeo,aMat,.52);la.position.x=-.46;
+    const ra=mk(aGeo,aMat,.52);ra.position.x=.46;
+    g.add(la,ra);
+    // legs
+    const lGeo=new THREE.BoxGeometry(.25,.65,.25);const lMat=new THREE.MeshLambertMaterial({color:0x334455});
+    const ll=mk(lGeo,lMat,-.15);ll.position.x=-.2;
+    const rl=mk(lGeo,lMat,-.15);rl.position.x=.2;
+    g.add(ll,rl);
+
+    g.position.set(LANES[lane],BASE_Y,2);
+    targetX=LANES[lane];
+    scene.add(g);
+    player=g;
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────────────────────
+function startGame(){
+    // reset
+    score=0;coinCount=0;distM=0;spd=BASE_SPD;mult=1;
+    jumping=false;ducking=false;dead=false;paused=false;
+    lane=2;targetX=LANES[2];playerY=BASE_Y;floorY=BASE_Y;vy=0;
+    frame=0;laneCd=0;
+    activePU=null;puTimer=0;puMax=0;boardTimer=0;
+
+    obs.forEach(o=>scene.remove(o.mesh));
+    cns.forEach(c=>scene.remove(c.mesh));
+    pus.forEach(p=>scene.remove(p.mesh));
+    parts.forEach(p=>scene.remove(p.mesh));
+    obs=[];cns=[];pus=[];parts=[];
+    if(crossingTrain){scene.remove(crossingTrain.mesh);crossingTrain=null;}
+    crossingTimer=0;
+
+    // Board speed
+    if(selBoard){const b=SHOP.skateboards.find(s=>s.id===selBoard);if(b)spd=BASE_SPD*b.sMult}
+
+    // Booster
+    if(equippedBooster){
+        const b=SHOP.boosters.find(x=>x.id===equippedBooster);
+        if(b&&b.owned){activePU=b;puTimer=b.dur;puMax=b.dur;if(b.mult)mult=b.mult}
+    }
+
+    // Reset track
+    trackSegs.forEach((s,i)=>s.mesh.position.z=-i*SEG_LEN);
+
+    buildPlayer();
+
+    ['menu','gameOver','shop'].forEach(hide);
+    ['gameUI','dots','hint'].forEach(show);
+    showMobileIngame(true);
+    updateHUD();
+
+    if(animId)cancelAnimationFrame(animId);
+    gameLoop();
+}
+
+function gameLoop(){
+    animId=requestAnimationFrame(gameLoop);
+    if(paused||dead)return;
+
+    frame++;
+    if(spd<MAX_SPD)spd+=0.00007;
+    distM+=spd*2.2;
+
+    // scroll track
+    trackSegs.forEach(s=>{
+        s.mesh.position.z+=spd;
+        if(s.mesh.position.z>20)s.mesh.position.z-=TOTAL_TRACK;
+    });
+    // scroll buildings
+    bldgs.forEach(b=>{b.mesh.position.z+=spd;if(b.mesh.position.z>20)b.mesh.position.z-=560});
+    // scroll furniture
+    furniture.forEach(f=>{f.mesh.position.z+=spd;if(f.mesh.position.z>20)f.mesh.position.z-=400});
+    // drift clouds
+    clouds.forEach(c=>{c.mesh.position.x+=c.spd;if(c.mesh.position.x>180)c.mesh.position.x=-180});
+
+    updateTrains();
+
+    // lane
+    laneCd=Math.max(0,laneCd-1);
+    player.position.x+=(LANES[lane]-player.position.x)*.2;
+
+    // Update floor Y based on current lane (train roof vs ground)
+    floorY = LANE_FLOORS[lane];
+
+    // jump / fall
+    if(jumping){
+        vy-=GRAV;playerY+=vy;
+        if(playerY<=floorY){playerY=floorY;vy=0;jumping=false}
+    } else if(playerY>floorY){
+        // fell off train edge — fall back to ground
+        vy-=GRAV; playerY+=vy;
+        if(playerY<=floorY){playerY=floorY;vy=0;}
+    } else {
+        playerY=floorY;
+    }
+
+    // duck scale
+    if(ducking){player.scale.y=.55;player.position.y=floorY*.55+floorY*.45*.55}
+    else{player.scale.y+=(1-player.scale.y)*.2;player.position.y=playerY}
+
+    // running bob
+    if(!jumping&&!ducking){
+        const bob=Math.sin(frame*.2)*.06;
+        player.position.y=floorY+bob;
+        player.rotation.z=Math.sin(frame*.15)*.03;
+    }
+
+    // On-train indicator
+    id('trainIndicator').style.display=onTrain()?'block':'none';
+
+    // spawning
+    const oRate=Math.max(28,80-Math.floor(distM/60));
+    if(frame%oRate===0)spawnObs();
+    if(frame%38===0)spawnCoins();
+    if(frame%260===0)spawnPU();
+    if(frame%120===0&&distM>150)spawnTrainObs();
+
+    moveAll();
+    checkCollisions();
+    tickTimers();
+
+    score=Math.floor(distM*2.2*mult);
+    updateHUD();
+    updateDots();
+    ren.render(scene,cam);
+}
+
+// ─── SPAWNING ─────────────────────────────────────────────────────────────────
+// topH  = world-space top of the solid part — player can JUMP OVER if playerFeet > topH
+// low   = player can DUCK UNDER (obstacle is near ground level with open space above)
+// duckable = tall arch obstacle — player can duck under the arch
+const OBS_TYPES=[
+    // ① Police barricade — TALL, must lane-switch (topH 2.6, neither jumpable nor duckable)
+    {topH:2.6, low:false, duckable:false, spawnY:0, build:()=>{
+        const g=new THREE.Group();
+        const mat=new THREE.MeshLambertMaterial({color:0xDD3333});
+        // Main upright
+        const body=new THREE.Mesh(new THREE.BoxGeometry(2,2.6,1.0),mat);
+        body.position.y=1.3;g.add(body);
+        // White diagonal stripes
+        for(let s=0;s<4;s++){
+            const stripe=new THREE.Mesh(new THREE.BoxGeometry(2,.22,1.05),new THREE.MeshLambertMaterial({color:s%2===0?0xffffff:0xDD3333}));
+            stripe.position.y=.4+s*.6;g.add(stripe);
+        }
+        // base feet
+        [-1,1].forEach(sx=>{
+            const f=new THREE.Mesh(new THREE.BoxGeometry(.35,.2,1.4),new THREE.MeshLambertMaterial({color:0x991111}));
+            f.position.set(sx*.8,.1,0);g.add(f);
+        });
+        g.castShadow=true;return g;
+    }},
+    // ② Low concrete wall — SHORT (topH 0.85), must JUMP or DUCK
+    {topH:0.85, low:true, duckable:false, spawnY:0, build:()=>{
+        const g=new THREE.Group();
+        const body=new THREE.Mesh(new THREE.BoxGeometry(3.8,.85,1.1),new THREE.MeshLambertMaterial({map:concreteTex(150,140,120)}));
+        body.position.y=.425;g.add(body);
+        for(let r=0;r<5;r++){
+            const stripe=new THREE.Mesh(new THREE.PlaneGeometry(.32,.86),new THREE.MeshBasicMaterial({color:r%2===0?0xFFAA00:0xffffff}));
+            stripe.rotation.y=Math.PI/2;stripe.position.set(-1.7+r*.85,.425,.56);g.add(stripe);
+        }
+        g.castShadow=true;return g;
+    }},
+    // ③ Fallen lamp post — LOW (topH 0.7), easily JUMPED
+    {topH:0.7, low:false, duckable:false, spawnY:0.35, build:()=>{
+        const g=new THREE.Group();
+        const pole=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,3.6,8),new THREE.MeshLambertMaterial({color:0x666655}));
+        pole.rotation.z=Math.PI/2;g.add(pole);
+        const globe=new THREE.Mesh(new THREE.SphereGeometry(.28,8,6),new THREE.MeshBasicMaterial({color:0xFFFF99}));
+        globe.position.set(1.8,0,0);g.add(globe);
+        g.castShadow=true;return g;
+    }},
+    // ④ Dumpster — MEDIUM (topH 1.8), JUMPABLE
+    {topH:1.8, low:false, duckable:false, spawnY:0, build:()=>{
+        const g=new THREE.Group();
+        const body=new THREE.Mesh(new THREE.BoxGeometry(1.9,1.8,1.5),new THREE.MeshLambertMaterial({color:0x225522}));
+        body.position.y=.9;g.add(body);
+        const lid=new THREE.Mesh(new THREE.BoxGeometry(2.0,.22,1.6),new THREE.MeshLambertMaterial({color:0x1a441a}));
+        lid.position.y=1.81;g.add(lid);
+        const tag=new THREE.Mesh(new THREE.PlaneGeometry(.9,.9),new THREE.MeshBasicMaterial({color:0xFF4444}));
+        tag.position.set(0,.9,.76);g.add(tag);
+        g.castShadow=true;return g;
+    }},
+    // ⑤ Scaffolding arch — DUCK UNDER (duckable, clearance ≥1.5 above ground)
+    // The solid cross-bar is at world y≈1.7, duck player top is ~0.9 — fits under
+    {topH:3.8, low:false, duckable:true, spawnY:0, build:()=>{
+        const g=new THREE.Group();
+        const mat=new THREE.MeshLambertMaterial({color:0x888877});
+        // left & right vertical poles (full height)
+        [[LANES[0]-LANES[1]-.1,0],[LANES[2]-LANES[1]+.1,0]].forEach(([x,z])=>{
+            const p=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,4.0,6),mat);
+            p.position.set(x,2.0,z);g.add(p);
+        });
+        // horizontal bars
+        [1.8,2.8,3.6].forEach(y=>{
+            const bar=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,LANES[2]-LANES[0]+.5,6),mat);
+            bar.rotation.z=Math.PI/2;bar.position.y=y;g.add(bar);
+        });
+        // wooden plank walkway (at height 2.8 — duck clears it at 1.5)
+        const plank=new THREE.Mesh(new THREE.BoxGeometry(LANES[2]-LANES[0]+.3,.14,.8),new THREE.MeshLambertMaterial({color:0xAA7733}));
+        plank.position.y=2.8;g.add(plank);
+        g.castShadow=true;return g;
+    }}
+];
+
+// ── Train-roof obstacles (only on train lanes 0 & 4) ──────────────────────────
+const TRAIN_OBS=[
+    // AC unit — JUMP over (topH relative to roof)
+    {topH:TRAIN_ROOF_Y+1.2, low:false, duckable:false, build:()=>{
+        const g=new THREE.Group();
+        const box=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.2,1.4),new THREE.MeshLambertMaterial({color:0x888899}));
+        box.position.y=TRAIN_ROOF_Y+0.6;g.add(box);
+        // Vents
+        for(let v=0;v<4;v++){
+            const vent=new THREE.Mesh(new THREE.BoxGeometry(1.62,.18,.3),new THREE.MeshLambertMaterial({color:0x666677}));
+            vent.position.set(0,TRAIN_ROOF_Y+0.3+v*.22,0);g.add(vent);
+        }
+        g.castShadow=true;return g;
+    }},
+    // Low pipe — DUCK under
+    {topH:TRAIN_ROOF_Y+3, low:false, duckable:true, build:()=>{
+        const g=new THREE.Group();
+        const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,2.6,10),new THREE.MeshLambertMaterial({color:0xAA8833}));
+        pipe.rotation.z=Math.PI/2;pipe.position.set(0,TRAIN_ROOF_Y+1.55,0);g.add(pipe);
+        // Support brackets
+        [-1,1].forEach(s=>{
+            const br=new THREE.Mesh(new THREE.BoxGeometry(.15,.7,.15),new THREE.MeshLambertMaterial({color:0x666644}));
+            br.position.set(s*.9,TRAIN_ROOF_Y+1.2,0);g.add(br);
+        });
+        g.castShadow=true;return g;
+    }},
+    // Antenna tower — JUMP or side-dodge
+    {topH:TRAIN_ROOF_Y+2.2, low:false, duckable:false, build:()=>{
+        const g=new THREE.Group();
+        const base=new THREE.Mesh(new THREE.BoxGeometry(.9,.4,.9),new THREE.MeshLambertMaterial({color:0x555555}));
+        base.position.y=TRAIN_ROOF_Y+.2;g.add(base);
+        const mast=new THREE.Mesh(new THREE.CylinderGeometry(.06,.1,2.2,8),new THREE.MeshLambertMaterial({color:0xAAAAAA}));
+        mast.position.y=TRAIN_ROOF_Y+1.5;g.add(mast);
+        // Cross bars
+        [.8,1.4].forEach(y=>{
+            const bar=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.2,6),new THREE.MeshLambertMaterial({color:0xAAAAAA}));
+            bar.rotation.z=Math.PI/2;bar.position.y=TRAIN_ROOF_Y+y;g.add(bar);
+        });
+        const light=new THREE.Mesh(new THREE.SphereGeometry(.12,8,6),new THREE.MeshBasicMaterial({color:0xFF2222}));
+        light.position.y=TRAIN_ROOF_Y+2.65;g.add(light);
+        g.castShadow=true;return g;
+    }},
+    // Exhaust stack with smoke puff (short — JUMP)
+    {topH:TRAIN_ROOF_Y+0.9, low:false, duckable:false, build:()=>{
+        const g=new THREE.Group();
+        const stack=new THREE.Mesh(new THREE.CylinderGeometry(.22,.28,.9,10),new THREE.MeshLambertMaterial({color:0x333333}));
+        stack.position.y=TRAIN_ROOF_Y+.45;g.add(stack);
+        const smoke=new THREE.Mesh(new THREE.SphereGeometry(.4,8,6),new THREE.MeshBasicMaterial({color:0x888888,transparent:true,opacity:.5}));
+        smoke.position.y=TRAIN_ROOF_Y+1.2;g.add(smoke);
+        g.castShadow=true;return g;
+    }}
+];
+
+function spawnTrainObs(){
+    // Randomly pick left or right train lane
+    const trainLane=Math.random()<.5?TRAIN_LANE_L:TRAIN_LANE_R;
+    const t=TRAIN_OBS[Math.floor(Math.random()*TRAIN_OBS.length)];
+    const m=t.build();
+    m.position.set(LANES[trainLane],0,-80);
+    scene.add(m);
+    obs.push({mesh:m, lane:trainLane, topH:t.topH, low:t.low, duckable:t.duckable, onTrainRoof:true});
+}
+
+// ── Diagonal barrier (spans 2 adjacent lanes, 1 free lane) ────────────────────
+function spawnDiagonalObs(){
+    // Pick which lane-pair is blocked: 1-2, 2-3, or 3-4 (ground lanes + transitions)
+    const blocked=1+Math.floor(Math.random()*3); // 1,2,3 → lanes blocked: [b,b+1]
+    const colors=[0xFF8800,0xFFCC00,0xFF4444];
+    const c=colors[Math.floor(Math.random()*colors.length)];
+    const mat=new THREE.MeshLambertMaterial({color:c});
+    const stripeMat=new THREE.MeshLambertMaterial({color:0x000000});
+
+    const g=new THREE.Group();
+    const x1=LANES[blocked], x2=LANES[blocked+1];
+    const midX=(x1+x2)/2;
+    const span=Math.abs(x2-x1)+1.5;
+
+    // Main diagonal plank
+    const plank=new THREE.Mesh(new THREE.BoxGeometry(span,2.2,.5),mat);
+    // Rotate ~20° to make it diagonal
+    plank.rotation.z=Math.PI*0.11;
+    plank.position.set(midX,1.1,0);
+    g.add(plank);
+
+    // Black warning stripes
+    for(let s=0;s<4;s++){
+        const stripe=new THREE.Mesh(new THREE.BoxGeometry(span*.22,2.25,.52),stripeMat);
+        stripe.rotation.z=Math.PI*0.11;
+        stripe.position.set(midX-span*.33+s*span*.22,1.1,.01);
+        g.add(stripe);
+    }
+    // Glowing edge
+    const edge=new THREE.Mesh(new THREE.BoxGeometry(span,.12,.52),new THREE.MeshBasicMaterial({color:0xFFFF00}));
+    edge.rotation.z=Math.PI*0.11;
+    edge.position.set(midX,2.15,.02);g.add(edge);
+
+    g.position.set(0,0,-85);
+    scene.add(g);
+    // Register as 2 separate obstacles for the blocked lanes
+    obs.push({mesh:g, lane:blocked,   topH:2.2, low:false, duckable:false, diagonal:true, blockLanes:[blocked,blocked+1]});
+}
+
+function spawnObs(){
+    // Occasionally spawn diagonal instead
+    if(Math.random()<0.12&&distM>100){spawnDiagonalObs();return;}
+
+    const count=Math.random()<.28?2:1;
+    // Ground lanes only (1,2,3 of 5)
+    const groundLanes=[1,2,3];
+    const shuffled=groundLanes.sort(()=>Math.random()-.5).slice(0,count);
+    shuffled.forEach(l=>{
+        const pool=count===1?OBS_TYPES:OBS_TYPES.slice(0,4);
+        const t=pool[Math.floor(Math.random()*pool.length)];
+        const m=t.build();
+        m.position.set(LANES[l],t.spawnY,-80);
+        scene.add(m);
+        obs.push({mesh:m, lane:l, topH:t.topH, low:t.low, duckable:t.duckable});
+    });
+}
+
+function spawnCoins(){
+    // Spawn on all 5 lanes (including train roof)
+    const l=Math.floor(Math.random()*5);
+    const baseY = LANE_FLOORS[l] + 0.1;
+    const n=1+Math.floor(Math.random()*6);
+    const arc=Math.random()<.4;
+    for(let i=0;i<n;i++){
+        const g=new THREE.Group();
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(.28,.06,8,18),new THREE.MeshLambertMaterial({color:0xFFD700,emissive:0xFFAA00,emissiveIntensity:.6}));
+        g.add(ring);
+        const disc=new THREE.Mesh(new THREE.CircleGeometry(.2,12),new THREE.MeshLambertMaterial({color:0xFFE040,emissive:0xFFCC00,emissiveIntensity:.8}));
+        g.add(disc);
+        const arcY=arc?Math.sin(i/n*Math.PI)*1.5:0;
+        g.position.set(LANES[l],baseY+arcY,-80-i*2.2);
+        scene.add(g);cns.push({mesh:g});
+    }
+}
+
+const PU_TYPES=[
+    {label:'2× Score',color:0xFFD700,glowColor:0xFFAA00,type:'score2x',dur:600},
+    {label:'Magnet',  color:0x4ECDC4,glowColor:0x00FFEE,type:'magnet',  dur:500},
+    {label:'Speed ⚡', color:0xFFFF44,glowColor:0xFFFF00,type:'speed',   dur:280}
+];
+
+function spawnPU(){
+    const t=PU_TYPES[Math.floor(Math.random()*PU_TYPES.length)];
+    const l=Math.floor(Math.random()*5);
+    const baseY=LANE_FLOORS[l]+0.4;
+    const g=new THREE.Group();
+    for(let r=0;r<3;r++){
+        const arm=new THREE.Mesh(new THREE.BoxGeometry(.22,1.1,.22),new THREE.MeshLambertMaterial({color:t.color,emissive:t.glowColor,emissiveIntensity:.7}));
+        arm.rotation.z=r*Math.PI/3;g.add(arm);
+    }
+    const core=new THREE.Mesh(new THREE.SphereGeometry(.28,10,8),new THREE.MeshBasicMaterial({color:t.glowColor}));
+    g.add(core);
+    g.position.set(LANES[l],baseY,-80);
+    scene.add(g);pus.push({mesh:g,...t});
+}
+
+// ─── TRAINS ───────────────────────────────────────────────────────────────────
+let trains=[], trainCars=[];
+const TRAIN_X_L = LANES[TRAIN_LANE_L]; // -9
+const TRAIN_X_R = LANES[TRAIN_LANE_R]; // +9
+const CAR_LEN   = 4.2;
+const CAR_H     = 2.4;
+const TRAIN_ROOF = CAR_H + 0.55; // world Y of roof surface
+
+function buildSideTrains(){
+    trains=[];
+    const trainColors=[[0xFF4422,0xCC2200],[0x2244CC,0x1133AA]];
+    // 3 train "sets" per side so there's always coverage over the visible range
+    [TRAIN_X_L, TRAIN_X_R].forEach((railX,si)=>{
+        const tc=trainColors[si];
+        for(let set=0;set<3;set++){
+            const numCars=8;
+            const trainLen=numCars*(CAR_LEN+0.3);
+            const g=buildTrainModel(tc[0],tc[1],numCars);
+            g.position.set(railX, 0.55, -set*trainLen - si*40);
+            g.rotation.y = railX>0 ? 0 : Math.PI;
+            scene.add(g);
+            trains.push({mesh:g, side:si===0?-1:1, railX, spd:0.45+Math.random()*.15, trainLen});
+        }
+    });
+}
+
+function buildTrainModel(bodyColor,accentColor,cars){
+    const g=new THREE.Group();
+    const bodyMat=new THREE.MeshLambertMaterial({color:bodyColor});
+    const accentMat=new THREE.MeshLambertMaterial({color:accentColor});
+    const windowMat=new THREE.MeshBasicMaterial({color:0xAACCFF,transparent:true,opacity:.7});
+    const wheelMat=new THREE.MeshLambertMaterial({color:0x222222});
+
+    const carLen=4.2, carW=2.2, carH=2.4, gap=.3;
+
+    for(let c=0;c<cars;c++){
+        const cg=new THREE.Group();
+        // Car body
+        const body=new THREE.Mesh(new THREE.BoxGeometry(carW,carH,carLen),bodyMat);
+        body.position.y=carH/2;cg.add(body);
+        // Accent stripe
+        const stripe=new THREE.Mesh(new THREE.BoxGeometry(carW+.02,.45,carLen+.02),accentMat);
+        stripe.position.y=carH*.6;cg.add(stripe);
+        // Windows (one side facing track)
+        for(let w=0;w<3;w++){
+            const win=new THREE.Mesh(new THREE.PlaneGeometry(.7,.75),windowMat);
+            win.position.set(carW/2+.01,carH*.68,-carLen/2+.6+w*1.3);
+            cg.add(win);
+        }
+        // Roof details
+        const roof=new THREE.Mesh(new THREE.BoxGeometry(carW*.8,.2,carLen*.9),accentMat);
+        roof.position.y=carH+.1;cg.add(roof);
+        // Wheels
+        for(let wx of[-carLen/2+.7,carLen/2-.7]){
+            for(let ws of[-carW/2-.05,carW/2+.05]){
+                const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.28,10),wheelMat);
+                wheel.rotation.x=Math.PI/2;
+                wheel.position.set(ws,.32,wx);cg.add(wheel);
+            }
+        }
+        // Connector between cars
+        if(c>0){
+            const conn=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,.35),wheelMat);
+            conn.position.set(0,carH*.35,carLen/2+gap/2);cg.add(conn);
+        }
+        cg.position.z=c*(carLen+gap);
+        cg.castShadow=true;
+        g.add(cg);
+    }
+    // Locomotive nose (first car gets a cab)
+    const cab=new THREE.Mesh(new THREE.BoxGeometry(carW*.9,carH*.55,1.2),accentMat);
+    cab.position.set(0,carH*.78,-.5);g.children[0].add(cab);
+    const headlight=new THREE.Mesh(new THREE.CircleGeometry(.22,10),new THREE.MeshBasicMaterial({color:0xFFFFCC}));
+    headlight.position.set(0,carH*.55,-carLen/2-.01);
+    headlight.rotation.y=Math.PI;
+    g.children[0].add(headlight);
+
+    return g;
+}
+
+// Occasional oncoming train obstacle that crosses in front (rare dramatic moment)
+let crossingTrain=null, crossingTimer=0;
+const CROSSING_INTERVAL=800;
+
+function spawnCrossingTrain(){
+    if(crossingTrain)return;
+    const g=buildTrainModel(0xCC2222,0x881111,3);
+    // Positioned across the track (perpendicular), starts off-screen left
+    g.rotation.y=Math.PI/2;
+    g.position.set(-60, .55, -25);
+    scene.add(g);
+    crossingTrain={mesh:g,vx:1.8};
+}
+
+function updateTrains(){
+    trains.forEach(t=>{
+        t.mesh.position.z += spd + t.spd;
+        if(t.mesh.position.z > 30) t.mesh.position.z -= t.trainLen * 3;
+        // Spin wheels
+        t.mesh.traverse(child=>{
+            if(child.geometry&&child.geometry.type==='CylinderGeometry'&&child.position.y<.5){
+                child.rotation.z+=.1;
+            }
+        });
+    });
+
+    // Crossing train
+    if(crossingTrain){
+        crossingTrain.mesh.position.x+=crossingTrain.vx;
+        if(crossingTrain.mesh.position.x>80){
+            scene.remove(crossingTrain.mesh);crossingTrain=null;crossingTimer=0;
+        }
+    }
+    crossingTimer++;
+    if(crossingTimer>CROSSING_INTERVAL&&!crossingTrain&&Math.random()<.008){
+        spawnCrossingTrain();
+    }
+}
+function moveAll(){
+    obs.forEach((o,i)=>{o.mesh.position.z+=spd;o.mesh.rotation.y+=.01;if(o.mesh.position.z>10){scene.remove(o.mesh);obs.splice(i,1)}});
+    cns.forEach((c,i)=>{
+        c.mesh.position.z+=spd;
+        c.mesh.rotation.y+=.08;  // spin the torus group
+        if(activePU?.type==='magnet'){
+            const dx=player.position.x-c.mesh.position.x, dz=player.position.z-c.mesh.position.z;
+            if(Math.sqrt(dx*dx+dz*dz)<7){c.mesh.position.x+=dx*.13;c.mesh.position.z+=dz*.13}
+        }
+        if(c.mesh.position.z>10){scene.remove(c.mesh);cns.splice(i,1)}
+    });
+    pus.forEach((p,i)=>{
+        p.mesh.position.z+=spd;
+        p.mesh.rotation.y+=.06;p.mesh.rotation.z+=.03;
+        p.mesh.position.y=1.5+Math.sin(frame*.06)*.3;
+        if(p.mesh.position.z>10){scene.remove(p.mesh);pus.splice(i,1)}
+    });
+    parts.forEach((p,i)=>{
+        p.mesh.position.x+=p.vx;p.mesh.position.y+=p.vy;p.mesh.position.z+=p.vz+spd;
+        p.vy-=.013;p.life--;
+        p.mesh.material.opacity=p.life/p.max;
+        if(p.life<=0){scene.remove(p.mesh);parts.splice(i,1)}
+    });
+}
+
+// ─── COLLISIONS ───────────────────────────────────────────────────────────────
+function checkCollisions(){
+    const px=player.position.x, pz=player.position.z;
+    const pFeet = player.position.y - 0.5;
+    const pTop  = player.position.y + (ducking ? 0.55 : 1.55) * player.scale.y;
+
+    for(let i=obs.length-1;i>=0;i--){
+        const o=obs[i];
+
+        // Diagonal obstacle: check if player is in one of the 2 blocked lanes
+        if(o.diagonal){
+            const inBlockedLane = o.blockLanes.includes(lane);
+            if(!inBlockedLane) continue; // safe lane, no hit
+        } else {
+            // Normal x proximity check — train-roof obs only hit if player is on correct lane
+            if(o.onTrainRoof && !onTrain()) continue;
+            if(!o.onTrainRoof && onTrain()) continue; // ground obs don't hit train rider
+            if(Math.abs(px-LANES[o.lane])>2.2) continue;
+        }
+
+        if(Math.abs(pz-o.mesh.position.z)<1.5){
+            if(pFeet > o.topH - 0.15) continue;
+            if(o.duckable && ducking) continue;
+            if(o.low && (ducking || pFeet > o.topH - 0.15)) continue;
+            if(boardTimer>0){
+                spawnParticles(o.mesh.position.clone(),0xFF8800);
+                scene.remove(o.mesh);obs.splice(i,1);
+                boardTimer=0;id('boardPill').style.display='none';
+                continue;
+            }
+            doGameOver();return;
+        }
+    }
+    for(let i=cns.length-1;i>=0;i--){
+        const c=cns[i];
+        if(Math.abs(px-c.mesh.position.x)<1.4&&Math.abs(pz-c.mesh.position.z)<1.3){
+            scene.remove(c.mesh);cns.splice(i,1);
+            coinCount++;allCoins++;
+            spawnParticles(c.mesh.position.clone(),0xFFD700);
+        }
+    }
+    for(let i=pus.length-1;i>=0;i--){
+        const p=pus[i];
+        if(Math.abs(px-p.mesh.position.x)<1.4&&Math.abs(pz-p.mesh.position.z)<1.3){
+            scene.remove(p.mesh);pus.splice(i,1);
+            applyPU(p);
+        }
+    }
+}
+
+function applyPU(p){
+    activePU=p;puTimer=p.dur;puMax=p.dur;
+    if(p.type==='score2x')mult=2;
+    if(p.type==='speed')spd=Math.min(MAX_SPD,spd*1.4);
+    id('boostLbl').textContent=p.label;
+    id('boostPill').style.display='block';
+}
+
+function tickTimers(){
+    if(puTimer>0){
+        puTimer--;
+        id('boostBar').style.width=(puTimer/puMax*100)+'%';
+        id('boostT').textContent=Math.ceil(puTimer/60)+'s';
+        if(puTimer<=0){if(activePU?.type==='score2x')mult=1;activePU=null;id('boostPill').style.display='none'}
+    }
+    if(boardTimer>0){
+        boardTimer--;
+        id('boardT').textContent=Math.ceil(boardTimer/60)+'s';
+        if(boardTimer<=0)id('boardPill').style.display='none';
+    }
+}
+
+// ─── PARTICLES ────────────────────────────────────────────────────────────────
+function spawnParticles(pos,color){
+    for(let i=0;i<8;i++){
+        const m=new THREE.Mesh(new THREE.SphereGeometry(.12,4,4),new THREE.MeshBasicMaterial({color,transparent:true,opacity:1}));
+        m.position.copy(pos);scene.add(m);
+        parts.push({mesh:m,vx:(Math.random()-.5)*.18,vy:.1+Math.random()*.18,vz:(Math.random()-.5)*.18,life:30,max:30});
+    }
+}
+
+// ─── GAME OVER ────────────────────────────────────────────────────────────────
+function doGameOver(){
+    dead=true;
+    player.rotation.z=.65;
+    const entry={score,date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})};
+    highScores.push(entry);highScores.sort((a,b)=>b.score-a.score);highScores=highScores.slice(0,10);
+    const users=getUsers(), ud=users[currentUser]||{};
+    if(!ud.stats)ud.stats={gamesPlayed:0,totalCoins:0,totalDistance:0};
+    ud.stats.gamesPlayed++;ud.stats.totalCoins+=coinCount;ud.stats.totalDistance+=Math.floor(distM);
+    users[currentUser]=ud;saveUsers(users);saveUD();
+    setTimeout(()=>{
+        id('goScore').textContent=score.toLocaleString();
+        id('goCoins').textContent=coinCount;
+        id('goDist').textContent=Math.floor(distM)+'m';
+        hide('gameUI');hide('dots');hide('hint');
+        id('hsList').innerHTML=highScores.slice(0,5).map((e,i)=>
+            `<div class="hs${i===0?' gold':''}"><span>${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${e.date}</span><strong>${e.score.toLocaleString()}</strong></div>`
+        ).join('');
+        show('gameOver');
+    },1100);
+}
+
+function backToMenu(){
+    dead=true;paused=false;
+    hide('gameOver');hide('gameUI');hide('dots');hide('hint');hide('pauseBox');
+    showMobileIngame(false);
+    showMenu();
+}
+
+// ─── HUD ──────────────────────────────────────────────────────────────────────
+function updateHUD(){
+    id('score').textContent=score.toLocaleString();
+    id('coins').textContent=coinCount;
+    id('dist').textContent=Math.floor(distM)+'m';
+    id('mult').textContent=mult+'×';
+}
+function updateDots(){for(let i=0;i<5;i++){const d=id('d'+i);if(d)d.classList.toggle('on',i===lane)}}
+
+// ─── PAUSE ────────────────────────────────────────────────────────────────────
+function togglePause(){
+    if(dead)return;
+    paused=!paused;
+    id('pauseBox').style.display=paused?'block':'none';
+}
+function quitToMenu(){paused=false;dead=true;id('pauseBox').style.display='none';backToMenu()}
+
+// ─── INPUT ────────────────────────────────────────────────────────────────────
+function onKey(e){
+    if(dead||id('adminPage').style.display==='flex')return;
+    switch(e.code){
+        case'ArrowLeft':case'KeyA':
+            if(lane>0&&laneCd<=0){lane--;laneCd=14}break;
+        case'ArrowRight':case'KeyD':
+            if(lane<4&&laneCd<=0){lane++;laneCd=14}break;
+        case'ArrowUp':case'KeyW':case'Space':
+            e.preventDefault();doJump();break;
+        case'ArrowDown':case'KeyS':
+            ducking=true;break;
+        case'KeyP':togglePause();break;
+    }
+}
+function onKeyUp(e){if(e.code==='ArrowDown'||e.code==='KeyS')ducking=false}
+function doJump(){
+    if(!jumping&&!ducking){
+        const b=activePU?.jBoost||1;
+        vy=JUMP_V*b;jumping=true;
+    }
+}
+
+// ─── MOBILE TOUCH ─────────────────────────────────────────────────────────────
+const isMobile=()=>'ontouchstart' in window||navigator.maxTouchPoints>0;
+
+function initMobileControls(){
+    if(!isMobile())return;
+    id('touchBtns').style.display='flex';
+    id('mobilePause').style.display='flex';
+    id('dots').style.bottom='148px';
+
+    // Swipe detection on touchZone
+    const tz=id('touchZone');
+    tz.style.display='block';
+    let sx=0,sy=0,st=0;
+
+    tz.addEventListener('touchstart',e=>{
+        if(dead||paused)return;
+        const t=e.changedTouches[0];
+        sx=t.clientX;sy=t.clientY;st=Date.now();
+    },{passive:true});
+
+    tz.addEventListener('touchend',e=>{
+        if(dead||paused)return;
+        const t=e.changedTouches[0];
+        const dx=t.clientX-sx, dy=t.clientY-sy;
+        const dt=Date.now()-st;
+        const adx=Math.abs(dx),ady=Math.abs(dy);
+        if(dt>400)return; // too slow = not a swipe
+        if(adx<18&&ady<18)return; // too short = tap (handled by buttons)
+        if(adx>ady){
+            // horizontal swipe
+            if(dx<-30&&lane>0&&laneCd<=0){lane--;laneCd=14}
+            if(dx>30&&lane<4&&laneCd<=0){lane++;laneCd=14}
+        } else {
+            // vertical swipe
+            if(dy<-30) doJump();
+            if(dy>30){ducking=true;setTimeout(()=>ducking=false,420)}
+        }
+    },{passive:true});
+}
+
+// Touch button handlers (on-screen D-pad)
+function tbStart(action,e){
+    if(e&&e.preventDefault)e.preventDefault();
+    if(dead||paused)return;
+    const el=id('tb-'+action);if(el)el.classList.add('pressed');
+    if(action==='left'  &&lane>0 &&laneCd<=0){lane--;laneCd=14}
+    if(action==='right' &&lane<4 &&laneCd<=0){lane++;laneCd=14}
+    if(action==='jump')  doJump();
+    if(action==='duck')  ducking=true;
+}
+function tbEnd(action){
+    const el=id('tb-'+action);if(el)el.classList.remove('pressed');
+    if(action==='duck') ducking=false;
+}
+
+function showMobileIngame(visible){
+    if(!isMobile())return;
+    id('touchBtns').style.display=visible?'flex':'none';
+    id('mobilePause').style.display=visible?'flex':'none';
+}
+
+function onResize(){
+    if(!cam||!ren)return;
+    cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();
+    ren.setSize(innerWidth,innerHeight);
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function id(s){return document.getElementById(s)}
+function show(s){id(s).style.display='block'}
+function hide(s){id(s).style.display='none'}
+</script>
+</body>
+</html>
